@@ -1,256 +1,189 @@
-$(document).ready(function() {
-    var $mh = $( "#main" ).height();
-    var $h = $(window).height() - $mh - 39;
-    $( "textarea" ).height($h);
-    
-    var progressbar = $( "#progressbar" );
-    var $max_pb = 50;
-    var $inc_pb = 5;
-        
-    // decrease font size on mobiles
-    if ($.browser.mobile) {
-        $( "#main p" ).css('font-size', '1em');
-        $( "#main input" )
-            .css('font-size', '1em')
-            .attr('size', 28);
+$( document ).ready( function() {
+  // auto-resize textarea
+  var $mh = $( "#main" ).height();
+  var $h = $( window ).height() - $mh - 39;
+  $( "textarea" ).height( $h );
+
+  var $pb = $( "#progressbar" );
+  var $max_pb = 50;
+  var $default_inc_pb = 25;
+  var $inc_pb = $default_inc_pb;
+  var $srv_suffix = '/ppb';
+
+  var $pathname = window.location.pathname;
+  var $addr = window.location.protocol + '//' + window.location.host;
+
+  // decrease font size on mobiles
+  if ( $.browser.mobile ) {
+    $( "#error p" ).css( 'font-size', '1em' );
+    $( "#link a" ).css( 'font-size', '1em' );
+  }
+
+  function pb_done() {
+    $pb.progressbar( "value", 100 );
+  };
+
+  function show_url( postid ) {
+    $( "#link" ).append("<a></a>");
+
+    var url = $addr + '/' + postid;
+
+    $( "#link a" )
+    .attr( "href", url )
+    .attr( "title", "post id: " + postid )
+    .append( url );
+
+    $( "#link a").show( 'drop', {}, 500, pb_done );
+  };
+
+  function show_error( string ) {
+    $( "#error" ).append( "<p>" + string + "</p>" );
+    $( "#error p" ).show( 'drop', {}, 500, pb_done );
+  };
+
+  function reset_all() {
+    $( "#error" ).empty();
+    $( "#link" ).empty();
+    $inc_pb = $default_inc_pb;
+    $pb.progressbar( "value", 0 );
+    $pb.show();
+    setTimeout( progress, 100 );
+  };
+
+  // checks progress bar value
+  function check_pb() {
+    var pbvalue = $pb.progressbar( "value" ) || 0;
+
+    if ( pbvalue == 0 ) {
+      return false;
     }
-                
-    function hide_error() {
-        $( "#area pre" ).remove();
-        $( "#main p" )
-            .removeClass('ui-state-error')
-            .hide('drop', {}, 500, cb_show);
-        return false;
+
+    if ( $max_pb > 90 ) {
+      setTimeout( progress, 100 );
+      return false;
     }
-        
-    function hide_input() {
-        $( "#main input" ).hide('drop', {}, 500, cb_show);
-        return false;
-    }
-        
-    // callback function to bring an error message
-    function cb_hide() {        
-        $( "#hide" )
-            .click(hide_error)
-            .show('highlight', 1000);
-        return false;
-    };
-    
-    // for ie, mobile and non-flash
-    function cb_hide_input() {
-        progressbar.progressbar("value", 0).hide();
-        
-        $( "#hide" )
-            .click(hide_input)
-            .show('highlight', {}, 500, function () {
-                $( "#send" ).button("option", "disabled", true);
-            });
-    };
-                
-    //callback function to hide error message
-    function cb_show() {
-        $( "#area" ).show();
-        $( "textarea" ).show('fold', {}, 500, function () {
-            $( "textarea" ).focus();
-            progressbar.progressbar("value", 0).hide();
-            $( "#send" ).button("option", "disabled", false);
-            $( "#hide" ).hide();
-        });
-    };
-    
-    function show_error(string) {
-        $( "#main p" )
-            .empty()
-            .append("Error: " + string)
-            .addClass("ui-state-error")
-            .show('drop', {}, 500, cb_hide);
-    };
 
-    function after_copy() {
-        $("#main input")
-            .css('background', '#1c94c4')
-            .val("Link has been copied")
-            .effect('highlight', {}, 1000, function() {
-                setTimeout(function () {
-                    progressbar.progressbar("value", 0).hide();
-                    
-                    $( "#send" ).button("option", "disabled", false);
-                    $( "#main input" )
-                        .hide('blind', {'direction': 'left'}, 500, function() {
-                            $( "#main input" )
-                                .empty()
-                                .css('background', '#f6a828 url(images/ui-bg_gloss-wave_35_f6a828_500x100.png) 50% 50% repeat-x')
-                                .zclip('remove');
-                        });
-                }, 1500);
-            });
-    };
-
-    function show_url() {
-        progressbar.progressbar("value", 0);
-        
-        if (navigator.userAgent.indexOf('MSIE') != -1
-                || $.browser.mobile || !FlashDetect.installed) {
-            $( "#main input" ).select();
-            return cb_hide_input();
-        } else {
-            $( "#main input" ).zclip({
-                path: '/js/ZeroClipboard.swf',
-                copy: function() { return $("#main input").val(); },
-                afterCopy: after_copy
-            });
-        }
-    };
-    
-    function check_pb() {
-        var $val = progressbar.progressbar( "value" ) || 0;
-        
-        if ($val == 0) {
-            return false;
-        }
-        
-        if ($max_pb > 90) {
-            setTimeout( progress, 100 );
-            return false;
-        }
-            
-        if ($val > $max_pb && $val < 100) {
-            $max_pb += 5;
-            setTimeout( progress, 100 );
-        } else {
-            setTimeout( check_pb, 100 );
-        }
-    };
-    
-    function progress() {
-      var val = progressbar.progressbar( "value" ) || 0;
-      
-      if (val == 70) {
-        $inc_pb = 2;
-      }
-      
-      if (val == 85 ) {
-        $inc_pb = 1;
-      }
-      
-      if (val == 98) {
-        return false;
-      }
-      
-      progressbar.progressbar( "value", val + $inc_pb );
-      
-      if ( val < $max_pb ) {
-        setTimeout( progress, 100 );
-      } else {
-        setTimeout( check_pb, 100 );
-      }
-    };
-            
-    $( "#send" ).click(function() {
-        $( "#send" ).button("option", "disabled", true);
-        
-        progressbar.show();
-        setTimeout( progress, 100 );
-            
-        $.post('/', $( "#postForm" ).serialize(), function(data) {
-            progressbar.progressbar("value", 100);
-            
-            if (data.id) {                    
-                var $uri = window.location.protocol 
-                    + '//' 
-                    + window.location.host 
-                    + '/'
-                    + data.id;
-                    
-                $( "#main input" )
-                    .val($uri)
-                    .show('drop', {}, 500, show_url);
-            } else {
-                show_error(data.err);
-            }
-        }), "json";
-    });
-
-    // retrieve document if needed
-    var $cur = window.location.pathname;
-        
-    if ($cur.length > 1) {
-        progressbar.show();
-        setTimeout( progress, 100 );
-        
-        var $url = "/?q=" + $cur.substring(1);
-        // store current height
-        var $h = $( "textarea" ).height() - 22;
-        
-        $( "textarea" ).hide();
-        $( "#area" ).hide();
-        
-        $.getJSON($url, function(json) {
-            $( "#hide" ).show('highlight', 1000);
-            
-            progressbar.progressbar("value", 100);
-
-            if (json.data) {
-                html = $.parseHTML("<pre>" + json.data + "</pre>");
-                $( "#area" ).append(html);      // fill text
-                $( "#area pre" ).height($h);    // restore height
-                
-                $( "#area" ).show('clip', {}, 300, function() {                    
-                    $( "#area pre" ).click(function() {
-                        $( "#area pre" ).attr('contenteditable', true);
-                    });
-                });
-                
-                $( "#hide" ).click(function() {
-                    $( "#area pre" ).removeAttr('contenteditable');
-                    $( "#area pre" ).remove();
-                    progressbar.progressbar("value", 0).hide();
-                    $( "textarea" ).show('fold', {}, 500, function () {
-                        $( "textarea" ).focus();
-                        $( "#send" ).button("option", "disabled", false);
-                        $( "#hide" ).hide();
-                    });
-                });
-                
-                $(window).resize(function() {
-                    var $h = $(window).height() - $( "#main" ).height() - 52;
-                    $( "#area" ).height($h);
-                    $( "#area pre" ).height($h);
-                });
-            } else {
-                show_error(json.err);
-            }
-        });
+    if ( pbvalue > $max_pb && pbvalue < 100 ) {
+      $max_pb += $inc_pb;
+      setTimeout( progress, 100 );
     } else {
-        $( "#send" ).removeAttr("disabled");
-        $( "textarea" ).focus();
+      setTimeout( check_pb, 100 );
     }
-}); // document.ready
-  
-$(window).resize(function() {
-    var $h = $(window).height() - $( "#main" ).height() - 24;
-    $( "textarea" ).height($h);
-});
-  
-$(function() {
-    $( "button").button({
-        icons: {
-            primary: "ui-icon-triangle-1-e"
-        }
-    });
-});
+  };
 
-$(function() {
-    var progressbar = $( "#progressbar" ),
-        progressLabel = $( ".progress-label" );
+  // limit progress bar speed
+  // makes it a bit slow
+  function progress() {
+    var pbvalue = $pb.progressbar( "value" ) || 0;
+
+    if ( pbvalue == 75 ) {
+      $inc_pb = 10;
+    }
+
+    if ( pbvalue == 95 ) {
+      $inc_pb = 1;
+    }
+
+    if ( pbvalue == 99 ) {
+      return false;
+    }
+
+    $pb.progressbar( "value", pbvalue + $inc_pb );
+
+    if ( pbvalue < $max_pb ) {
+      setTimeout( progress, 100 );
+    } else {
+      setTimeout( check_pb, 100 );
+    }
+  };
+
+  function load_post() {
+    reset_all();
+
+    // store current height before hide
+    var height = $( "textarea" ).height() - 22;
+
+    $( "textarea" ).hide();
+    $( "#area" ).hide();
     
-    progressbar.progressbar({
-        value: true,
-        change: function() {
-            progressLabel.text( progressbar.progressbar( "value" ) + "%");
-        },
-        complete: function() {
-            progressbar.hide('fade', 500);
+    // request post via GET
+    var url = $addr + $srv_suffix + "?q=" + $pathname.substring( 1 );
+
+    $.getJSON( url, function( json ) {
+      if ( json.id ) {
+        $( "#area" ).append( $.parseHTML( "<pre>" + json.data + "</pre>" ) );
+        $( "#area pre" ).height( height );
+
+        $( "#area" ).show( 'clip', {}, 300, function() {
+          $( "#area pre" ).click( function() {
+            $( "#area pre" ).attr( 'contenteditable', true );
+          } );
+        } );
+      } else {
+        show_error( json.err );
+      }
+    } );
+  };
+
+  function create_post() {
+    reset_all();
+
+    $( "#send" ).button( "disable" );
+
+    $.post( $srv_suffix, $( "#postForm" ).serialize(),
+      function( data ) {
+        if ( data.id ) {
+          show_url( data.id );
+        } else {
+          show_error( data.err );
         }
-    });
-});
+      }
+    ), "json";
+  };
+
+  $( "#send" ).click( create_post );
+  
+  // ctrl + enter in textarea sends request
+  // to create new post
+  function MessageTextOnKeyEnter( e ) {
+    if ( e.keyCode == 13 && e.ctrlKey ) {
+      create_post();
+    }
+  };
+
+  if ( $pathname.length > 1 ) {
+    load_post();
+  } else {
+    $( "#send" ).removeAttr( "disabled" );
+    $( "textarea" ).keydown( MessageTextOnKeyEnter ).focus();
+  }
+} ); // document.ready
+  
+$( window ).resize( function() {
+  var $h = $( window ).height() - $( "#main" ).height() - 24;
+  $( "textarea" ).height( $h );
+} );
+
+$( function() {
+  $( "button" ).button( {
+      icons: { primary: "ui-icon-triangle-1-e" }
+  } );
+} );
+
+$( function() {
+  var pbsetup = {
+    value: true,
+    change: function() {
+      $( ".progress-label" )
+      .text( $( "#progressbar" ).progressbar( "value" ) + "%" );
+    },
+    complete: function() {
+      $( "#progressbar" ).hide( 'fade', 100, function() {
+        $( "#send" ).button( "enable" );
+        $( "textarea" ).focus();
+      } );
+    }
+  };
+
+  $( "#progressbar" ).progressbar( pbsetup );
+} );

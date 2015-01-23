@@ -1,47 +1,39 @@
-<!doctype html>
- 
+<!doctype html> 
 <html lang="en">
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="PPB - pastebin writen in Perl">
-  <meta name="keywords" content="pastebin">
-  <title>bin - put your stuff here</title>
+  <meta name="description" content="pastebin written in Perl">
+  <meta name="keywords" content="pastebin, perl, jQuery">
+  <meta name="author" content="gh0stwizard">
+  <title>ppb &part; pastebin &forall;</title>
   <link rel="shortcut icon" href="/img/favicon.ico" type="image/x-icon">
-  <link rel="stylesheet" href="http://code.jquery.com/ui/1.10.3/themes/ui-lightness/jquery-ui.css">
+  <link rel="stylesheet" href="/css/jquery-ui.css">
   <link rel="stylesheet" href="/css/ppb.css">
-  <script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
-  <script src="http://code.jquery.com/ui/1.10.3/jquery-ui.min.js"></script>
-  <script src="/js/jquery.zclip.js"></script>
+  <script src="/js/jquery-1.9.1.min.js"></script>
+  <script src="/js/jquery-ui.min.js"></script>
   <script src="/js/detectMobile.js"></script>
-  <script src="http://www.featureblend.com/flash_detect_1-0-4/flash_detect.js"></script>
   <script src="/js/ppb.js"></script>
 </head>
-
 <body>
     <form action="/" method="post" id="postForm" style="height: 0">
         <div id="logo">
-            <a href="/"><img src="img/bin.png" alt="logo"></a>
+          <a href="/" title="homepage"><img src="/img/bin.png" alt="logo" /></a>
         </div>
-        
         <div id="main" class="ui-widget-content">
             <!-- errors appears here //-->
-            <p class="ui-widget-header"></p>
-            <!-- link appears here//-->
-            <input class="ui-widget-header" type="text" value="" size="36">
+            <div id="error" class="ui-widget-error"></div>
+            <!-- link appears here //-->
+            <div id="link" class="ui-widget"></div>
+            <!-- obviously, this is submit button //-->
             <div id="button">
-                <button id="hide" type="button">Hide</button>
-                <button id="send" type="submit" disabled>Submit</button>
+                <button id="send" type="submit" disabled>Paste</button>
             </div>
         </div>
-        
         <div id="area">
             <textarea form="postForm" name="data"></textarea>
         </div>
-        
         <div id="progressbar"></div>
-        
-        <input form="postForm" name="expire" type="hidden" value="0">
     </form>
 </body>
 </html>

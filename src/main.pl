@@ -1,216 +1,337 @@
 #!/usr/bin/perl
 
-# ppbd - perl pastebin daemon
+# ppb - Perl pastebin
 #
-# This is free software; you can redistribute it and/or modify it 
+# This is free software; you can redistribute it and/or modify it
 # under the same terms as the Perl 5 programming language system itself.
 
 use strict;
-use warnings;
 use POSIX ();
 use Cwd ();
-use Getopt::Long qw(:config no_ignore_case bundling);
-use vars qw($PROGRAM_NAME $VERSION);
-$PROGRAM_NAME = "ppb.pl"; $VERSION  = '0.10';
+use Getopt::Long qw( :config no_ignore_case bundling );
+use File::Spec::Functions ();
+use vars qw( $PROGRAM_NAME $VERSION );
+
+
+$PROGRAM_NAME = "ppb"; $VERSION = '0.11';
+
 
 my $retval = GetOptions
 (
   \my %options,
-  'help|h',
-  'version',
-  'verbose|v',
-  'pidfile|P=s',
-  'home|H=s',
-  'fork',
-  'logfile|L=s',
-  'enable-syslog',
-  'syslog-facility=s',
-  'quiet',
-  'listen=s',
-  'db_server|S=s',
-  'db_name|N=s',
-  'db_coll|C=s',
-  'indexfile|I=s',
-  'enable-vimbow',
-  'vimbow=s',
+  'help|h',             # print help page and exit
+  'version',            # print program version and exit
+  'debug',		# enables verbose logging
+  'verbose',            # enables very verbose logging
+  'pidfile|P=s',        # pid file ( optional )
+  'home|H=s',           # chdir to home directory before fork
+  'background|B',       # run in background
+  'logfile|L=s',        # log file ( optional )
+  'enable-syslog',      # enable logging via syslog
+  'syslog-facility=s',  # syslog facility
+  'quiet|q',            # enable silence mode (no log at all)
+  'listen|l=s',         # listen on IP:PORT
+  'backend|b=s',	# backend: feersum
+  'app|a=s',		# application file
+  'www-dir|W=s',	# www directory
 );
 
-if (defined $retval and !$retval) {
-    # unknown option workaround
-    print "use --help for help\n";
-    exit 1;
-} elsif (exists $options{'help'}) {
-    &print_help();
-    exit 0;
-} elsif (exists $options{'version'}) {
-    print "$PROGRAM_NAME version $VERSION\n";
-    exit 0;
-}
+&os_fixes();
 
-# fix relative paths to absolute as needed
-my $pwd = Cwd::abs_path(Cwd::cwd);
-
-for my $opt (qw(logfile home pidfile indexfile)) {
-    next if (!exists $options{$opt});
-    next if ($options{$opt} =~ m/^\//);
-    $options{$opt} = join('/', $pwd, $options{$opt});
-}
-
-# pidfile lock
-if (exists $options{'pidfile'}) {
-    -e $options{'pidfile'} 
-        and die "pidfile \`$options{'pidfile'}\' already exits";
-
-    $ENV{'PPB_PIDFILE'} = $options{'pidfile'};
-}
-
-# HTTP server settings
-if (exists $options{listen}) {
-    $ENV{PPB_LISTEN} = $options{listen};
-}
-
-# MongoDB server settings
-if (exists $options{db_server}) {
-    $ENV{PPB_DBSERV} = $options{db_server};
-}
-
-if (exists $options{db_name}) {
-    $ENV{PPB_DBNAME} = $options{db_name};
-}
-
-if (exists $options{db_coll}) {
-    $ENV{PPB_DBCOLL} = $options{db_coll};
-}
-
-# HTTP index.html file
-if (exists $options{indexfile}) {
-    $ENV{PPB_INDEX} = $options{indexfile};
-}
-
-# VimBow support
-if (exists $options{'vimbow'}) {
-    $ENV{PPB_VIMBOW} = $options{'vimbow'};
-}
-
-if (exists $options{'enable-vimbow'}) {
-    $ENV{PPB_VIMBOW_ENABLED} = 1;
-}
-
-
-# Set up AnyEvent::Log environment variable.
-$ENV{PERL_ANYEVENT_LOG} = &ae_log_string();
-
-# Workaround for run program via staticperl vs common perl.
-#
-# Explaination: Common perl after fork was chrooted to real '/',
-# but there are very high possibility that user just testing this
-# program and do not imported MyService/*.pm to PERL5LIB. 
-# So, we put real path to MyService directory into @INC. After
-# that all modules in MyService will be successfuly loaded :-)
-if ($0 ne '-e') { # :-\ staticperl uses '-e' as $0
-    my $filepath = $0;
-    $filepath =~ s/\/.*$//m;
-    $filepath = join('/', $pwd, $filepath);
-    unshift @INC, $pwd, $filepath;
-}
-
-if (exists $options{'fork'}) {
-    &daemonize();
-}
-
-# Start the main program after fork. This is best practicle for EV-based
-# applications.
-unless (my $rv = do $PROGRAM_NAME) {
-    warn "couldn't parse $PROGRAM_NAME: $@" if $@;
-    warn "couldn't do $PROGRAM_NAME: $!" unless defined $rv;
-    warn "couldn't run $PROGRAM_NAME" unless $rv;
+if ( defined $retval and !$retval ) {
+  # unknown option workaround for GetOpt::Long module
+  print "Use --help for help";
+  exit 1;
+} elsif ( exists $options{ 'help' } ) {
+  &print_help();
+} elsif ( exists $options{ 'version' } ) {
+  &print_version();
+} else {
+  &run_program();
 }
 
 exit 0;
 
-# /-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|
+# ---------------------------------------------------------------------
 
-# perldoc AnyEvent::Log
-sub ae_log_string() {
-    # AnyEvent::Log's control via environment variables
-    my $AE_LOG = (exists $options{'verbose'})
-        ? 'filter=trace'
-        : (exists $options{'debug'})
-            ? 'filter=debug'
-            : 'filter=note'; # default log level
+#
+# OS-specific adjustments and fixes
+#
+sub os_fixes() {
+  $\ = $^O eq 'MSWin32' ? "\r\n" : "\n";
 
-    if (exists $options{'logfile'}) {
-        # enable syslog + logfile
-        if (exists $options{'enable-syslog'}) {
-            $AE_LOG .= sprintf ":log=file=%s=+%syslog:%syslog=%s",
-                $options{'logfile'},
-                (exists $options{'syslog-facility'}) 
-                    ? $options{'syslog-facility'}
-                    : 'LOG_DAEMON';
-        } else {
-            $AE_LOG .= sprintf ":log=file=%s", $options{'logfile'};
-        }
-    } elsif (exists $options{'enable-syslog'}) {
-        # syslog
-        $AE_LOG .= sprintf ":log=syslog=%s",
-            $options{'syslog-facility'}
-                ? $options{'syslog-facility'}
-                : 'LOG_DAEMON';
-    } elsif (exists $options{'quiet'}) {
-        # disable logging totally
-        $AE_LOG .= ':log=nolog';
-    } else {
-        # print to stdout
-        $AE_LOG .= ':log=';
+  return if ( $0 eq '-e' ); # fix for staticperl
+  
+  # Fix for modules. Perl is able now loading program-specific
+  # modules from directory where file main.pl is placed w/o "use lib".
+  my $basedir = &get_program_basedir();
+  my $mod_dir = "modules";
+  my $modules_path = &File::Spec::Functions::rel2abs( $mod_dir, $basedir );
+
+  unshift @INC, $modules_path;
+  
+  return;
+}
+
+sub get_program_basedir() {
+  if ( $0 eq '-e' ) {
+    ...
+  } else {
+    my ( $vol, $dirs ) = &File::Spec::Functions::splitpath( $0 );
+    return &Cwd::abs_path
+    (
+      &File::Spec::Functions::catpath( $vol, $dirs )
+    );
+  }
+}
+
+#
+# main subroutine
+#
+sub run_program() {
+  &set_default_options();
+  &fix_paths();
+  &set_abs_paths();
+  &set_env();
+  &set_logger();
+
+  exists $options{ 'background' } && &daemonize();
+  
+  &xrun();
+}
+
+#
+# fork the process
+#
+sub daemonize() {
+  my $rootdir = ( exists $options{'home'} )
+    ? $options{ 'home' }
+    : &File::Spec::Functions::rootdir();
+  chdir( $rootdir )            || die "Can't chdir \`$rootdir\': $!";
+  # Due a feature of Perl we are not closing standard handlers.
+  # Otherwise, Perl will complains and throws warning messages
+  # about reopenning 0, 1 and 2 filehandles.
+  my $devnull = ( $^O eq 'MSWin32' ) ? 'NUL' : '/dev/null';
+  open( STDIN, "< $devnull" )  || die "Can't read $devnull: $!";
+  open( STDOUT, "> $devnull" ) || die "Can't write $devnull: $!";
+  defined( my $pid = fork() )  || die "Can't fork: $!";
+  exit if ( $pid );
+  ( &POSIX::setsid() != -1 )   || die "Can't setsid: $!";
+  open( STDERR, ">&STDOUT" )   || die "Can't dup stdout: $!";
+}
+
+#
+# Starts a rest major part of the program
+#
+sub xrun() {
+  my $rv;
+  my $file = $options{ 'backend' };
+
+  if ( $rv = do $file ) {
+    return;
+  }
+
+  # an error was occured
+
+  if ( $@ ) {
+    die "Couldn't parse $file:$\$@";
+  }
+
+  if ( $! and !defined $rv ) {
+    die "Couldn't do $file: $!";
+  }
+
+  if ( !$rv ) {
+    die "Couldn't run: $file";
+  }
+}
+
+#
+# sets relative paths for files and adds extention to file names
+#
+sub fix_paths() {
+  my $file_ext = 'pl';
+  my %relpaths =
+  (
+    # option       relative path
+    'backend'	=> 'backend',
+    'app'	=> 'app',
+  );
+  
+  for my $option ( keys %relpaths ) {
+    my $relpath = $relpaths{ $option };
+    my $filename = join '.', $options{ $option }, $file_ext;
+
+    $options{ $option } = &File::Spec::Functions::catfile
+    (
+      &get_program_basedir(),
+      $relpath,
+      $filename,
+    );
+  }
+}
+
+#
+# use realpath always
+#
+sub set_abs_paths() {
+  my @pathopts = qw
+  (
+    logfile
+    home
+    pidfile
+    www-dir
+  );
+
+  for my $option ( @pathopts ) {
+    next if ( !exists $options{ $option } );
+    my $path = $options{ $option };
+    # naive but simple
+    if ( not &File::Spec::Functions::file_name_is_absolute( $path ) ) {
+      my $basedir = &get_program_basedir();
+      $path = &File::Spec::Functions::catdir( $basedir, $path );
     }
 
-    return $AE_LOG;
+    $options{ $option } = &Cwd::abs_path( $path);
+  }
 }
 
-sub daemonize() {
-    # chroot
-    my $rootdir = ($options{'home'}) ? $options{'home'} : '/';
-    chdir ($rootdir)            || die "chdir \`$rootdir\': $!";
-    # Due to bug/feature of perl we do not close standard handlers.
-    # Otherwise, Perl will complain and throw warning messages 
-    # about reopenning 0, 1 and 2 filehandles.
-    open(STDIN, "< /dev/null")    || die "can't read /dev/null: $!";
-    open(STDOUT, "> /dev/null")   || die "can't write /dev/null: $!";
-    defined(my $pid = fork())     || die "can't fork: $!";
-    exit if $pid;
-    (POSIX::setsid() != -1)       || die "Can't start a new session: $!";
-    open(STDERR, ">&STDOUT")      || die "can't dup stdout: $!";
+sub set_default_options() {
+  my %defaultmap =
+  (
+    'backend'	=> 'feersum',
+    'app'	=> 'feersum',
+    'www-dir'	=> &File::Spec::Functions::catdir( '..', 'www' ),
+  );
+  
+  for my $option ( keys %defaultmap ) {
+    if ( not exists $options{ $option } ) {
+      $options{ $option } = $defaultmap{ $option };
+    }
+  }
 }
 
+#
+# use environment variables to exchange between main & child
+#
+sub set_env() {
+  my $prefix = uc( $PROGRAM_NAME );
+  my %envmap = 
+  (
+    #  %options        %ENV
+    'pidfile'   => join( '_', $prefix, 'PIDFILE' ),
+    'listen'    => join( '_', $prefix, 'LISTEN' ),
+    'app'	=> join( '_', $prefix, 'APP_NAME' ),
+    'www-dir'   => join( '_', $prefix, 'WWW_DIR' ),
+  );
+
+  for my $option ( keys %envmap ) {
+    if ( exists $options{ $option } ) {
+      $ENV{ $envmap{ $option } } //= $options{ $option };
+    }
+  }
+}
+
+#
+# we're using AE::Log logger, see perlodc -m AnyEvent::Log for details.
+# Logger is configured via environment variables.
+#
+sub set_logger() {
+  my $loglevel = 'filter=note';    # default log level 'notice'
+  my $output = 'log=';             # print to stdout by default
+  # disables notifications from AnyEvent(?::*) modules
+  # they are "buggy" with syslog and annoying
+  my $suppress = 'AnyEvent=error';
+
+  if ( exists $options{ 'debug' } ) {
+    $loglevel = 'filter=debug';
+  }
+  
+  if ( exists $options{ 'verbose' } ) {
+    $loglevel = 'filter=trace';
+  }
+
+  # setup output device: stdout, logfile or syslog
+
+  if ( exists $options{ 'logfile' } ) {
+    $output = sprintf "log=file=%s", $options{ 'logfile' };
+  }
+
+  if ( exists $options{ 'enable-syslog' } ) {
+    my $facility = $options{ 'syslog-facility' } || 'LOG_DAEMON';
+    $output = sprintf "log=syslog=%s", $facility;
+  }
+  
+  # silence mode
+  if ( exists $options{ 'quiet' } ) {
+    $output = '+log=nolog';
+  } else {  
+    if ( exists $options{ 'background' } ) {
+      # disables logging when running in background
+      # and are not using logfile or syslog
+      unless ( 
+          exists $options{ 'logfile' }
+       || exists $options{ 'enable-syslog' }
+      ) {
+        $output = '+log=nolog';
+      }
+    }
+  }
+
+  $ENV{ 'PERL_ANYEVENT_LOG' } ||= join
+  (
+    # FIXME
+    # A sequence dependence due "bugs" in AnyEvent and AnyEvent::Util
+    # * Please, no AE::Log() calls into BEGIN {} blocks;
+    # * Sys::Syslog::openlog() must be called before
+    #   "use AnyEvent(::Util)";
+    " ",
+    $suppress,
+    join( ":", $loglevel, $output ),
+  );
+}
+
+#
+# prints help page to stdout
+#
 sub print_help() {
-    printf "Allowed options:\n";
+  print "Allowed options:";
 
-    my $h = "  %-32s %-45s\n";
+  my $h = "  %-24s %-48s" . $\;
 
-    printf $h, "-h [--help]", "show this usage information";
-    printf $h, "--version", "show version information";
-    printf $h, "-v [--verbose]", "be more verbose";
-    printf $h, "--fork", "fork server process";
+  printf $h, "--help [-h]", "prints this information";
+  printf $h, "--version", "prints program version";
 
-    printf $h, "-H [--home] arg", "working dir when fork";
-    printf $h, "", "- default is /";
+  printf $h, "--listen [-l] arg", "IP:PORT for listener";
+  printf $h, "", "- default: \"127.0.0.1:28950\"";
+  
+  printf $h, "--backend [-b] arg", "backend name (default: feersum)";
+  printf $h, "--app [-a] arg", "application name (default: feersum)";
+  
+  printf $h, "--background [-B]", "run process in background";
+  printf $h, "", "- default: run in foreground (disables logging)";
+  printf $h, "", "- hint: use --logfile / --enable-syslog for logging";
 
-    printf $h, "--quiet", "disable logging";
-    printf $h, "-P [--pidfile] arg", "full path to pidfile";
-    printf $h, "-L [--logfile] arg", "full path to logfile (if not set, log to stdout)";
-    printf $h, "--enable-syslog", "log via syslog (disables logging to file)";
-    printf $h, "--syslog-facility", "syslog facility (default is local7)";
+  printf $h, "--home [-H] arg", "working directory after fork";
+  printf $h, "", "- default: root directory";
+  printf $h, "--www-dir [-W] arg", "www directory with index.html";
+  
+  printf $h, "--debug", "be verbose";
+  printf $h, "--verbose", "be very verbose";
+  printf $h, "--quiet [-q]", "be silence, disables logging";
+  printf $h, "--enable-syslog", "enable logging via syslog (default: disabled)";
+  printf $h, "--syslog-facility arg", "syslog's facility (default: LOG_DAEMON)";
+  printf $h, "--logfile [-L] arg", "path to log file (default: stdout)";
 
-    printf $h, "--listen arg", "comma separated list of ip:port to listen on";
-    printf $h, "", "- default is 127.0.0.1:28950";
-    
-    printf $h, "-I [--indexfile] arg", "full path to skin directory";
-    printf $h, "", "- default is /var/www/ppb/index.html";
-
-    printf $h, "-S [--db_server] arg", "mongodb ip:port server address and port";
-    printf $h, "", "- default is 127.0.0.1:27017";
-    printf $h, "-N [--db_name] arg", "mongodb database";
-    printf $h, "", "- default is ppb";
-    printf $h, "-C [--db_coll] arg", "mongodb collection name in db";
-    printf $h, "", "- default is posts";
+  printf $h, "--pidfile [-P] arg", "path to pid file (default: none)";
 }
+
+sub print_version() {
+  printf "%s version %s%s",
+    ( &File::Spec::Functions::splitpath( $PROGRAM_NAME ) )[2],
+    $VERSION,
+    $\,
+  ;
+}
+
+__END__

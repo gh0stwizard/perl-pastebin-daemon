@@ -1,41 +1,42 @@
 /*
-    ppb-css 0.01
+    ppb-css 0.02
 */
 
-html, body { 
+html, body {
     height: 98%;
     margin: 0;
-    background-color: #f1f1f1
+    background-color: #f1f1f1;
 }
 
-textarea { 
+textarea {
     width: 99%;
     overflow: auto;
     background-color: white;
-    resize: none
+    resize: none;
+    font-size: 1.6em;
 }
 
-#main { 
+#main {
     margin: 0 5px 5px 0;
     z-index: 1;
 }
-#main p { 
+#error p, #link a {
     display: none;
     float: left;
     font-size: 2em;
     margin: 5px 0 0 5px;
     text-indent: 3px;
-    padding-right: 10px
+    padding-right: 10px;
 }
-#main input { 
-    display: none;
-    float:left;
-    font-size: 2em;
-    margin: 5px 0 0 5px;
+#error p {
+    color: #bb1122;
+}
+#link a {
+    color: #1111aa;
 }
 
-#button { 
-    padding: 5px; 
+#button {
+    padding: 5px;
     text-align: right;
     z-index: 1;
 }
@@ -45,15 +46,6 @@ textarea {
     text-align: center;
     z-index: 1;
 }
-
-#error { 
-    color: red;
-}
-
-#hide { 
-    display: none;
-}
-
 
 #logo { 
     z-index: 3;

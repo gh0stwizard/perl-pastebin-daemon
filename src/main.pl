@@ -13,7 +13,7 @@ use File::Spec::Functions ();
 use vars qw( $PROGRAM_NAME $VERSION );
 
 
-$PROGRAM_NAME = "ppb"; $VERSION = '0.11';
+$PROGRAM_NAME = "ppb"; $VERSION = '0.12';
 
 
 my $retval = GetOptions
@@ -74,15 +74,22 @@ sub os_fixes() {
 }
 
 sub get_program_basedir() {
+  my $execp = $0;
+
   if ( $0 eq '-e' ) {
-    ...
-  } else {
-    my ( $vol, $dirs ) = &File::Spec::Functions::splitpath( $0 );
-    return &Cwd::abs_path
-    (
-      &File::Spec::Functions::catpath( $vol, $dirs )
-    );
+    # staticperl fix
+    if ( $^O eq 'linux' ) {
+      $execp = &Cwd::abs_path( "/proc/self/exe" );
+    } else {
+      die "not implemented yet";
+    }
   }
+  
+  my ( $vol, $dirs ) = &File::Spec::Functions::splitpath( $execp );
+  return &Cwd::abs_path
+  (
+    &File::Spec::Functions::catpath( $vol, $dirs )
+  );
 }
 
 #
@@ -230,6 +237,12 @@ sub set_env() {
       $ENV{ $envmap{ $option } } //= $options{ $option };
     }
   }
+  
+  # set basedir
+  my $key = join( '_', $prefix, 'BASEDIR' );
+  $ENV{ $key } = &get_program_basedir();
+  
+  return;
 }
 
 #

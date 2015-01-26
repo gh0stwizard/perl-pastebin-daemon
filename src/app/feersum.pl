@@ -4,15 +4,20 @@ use HTTP::Body ();
 use JSON::XS ();
 use Math::BigInt ();
 use Encode ();
+use PPB::DB::UnQLite;
 
+# body checks
 my $MIN_BODY_SIZE = 4;
 my $MAX_BODY_SIZE = 524288;
 
+# http headers for responses
 my @HEADER_JSON = ( 'Content-Type' => 'application/json' );
 my @HEADER_HTML = ( 'Content-Type' => 'text/html; charset=UTF-8' );
 my @HEADER_PLAIN = ( 'Content-Type' => 'text/plain' );
 
+# www dir with index.html (standalone mode)
 my $WWW_DIR = $ENV{ join( '_', uc( $PROGRAM_NAME ), 'WWW_DIR' ) };
+
 
 sub app {
   my $req = shift;
@@ -32,8 +37,9 @@ sub app {
       &create_post( $r, $len, $type ),
     );
   } elsif ( $method eq 'GET' ) {
-    require Feersum::SendFile;
-    &Feersum::SendFile::send( $WWW_DIR, $req );
+    # when working standalone, i.e. without nginx
+    require PPB::Feersum::Tiny;
+    &PPB::Feersum::Tiny::send_file( $WWW_DIR, $req );
   } else {
     $req->send_response
     (
@@ -63,6 +69,10 @@ sub create_post($$$) {
     } else {
       if ( my $post_id = &store_post( $params ) ) {
         %response = ( 'id' => $post_id );
+        
+        AE::log trace => "post %s stored, total: %d",
+          $post_id,
+          &PPB::DB::UnQLite::entries();
       } else {
         %response = ( 'err' => "failed to store post" );
       }
@@ -74,13 +84,18 @@ sub create_post($$$) {
   return &JSON::XS::encode_json( \%response );
 }
 
+#
+# Parameters:
+#   HTTP::Body object
+#
+# Returns: 
+#   post id (string) or nothing
+#
 sub store_post($) {
   my ( $params ) = @_;
   
   my $post_id = &gen_post_id();
-
-  AE::log trace => "post id: %s", $post_id;
-  
+  &PPB::DB::UnQLite::store( $post_id, $params->{ 'data' } ) || return;  
   return $post_id;
 }
 
@@ -92,8 +107,12 @@ sub store_post($) {
   my $counter = 1;
   
   sub gen_post_id() {
-    my $delta = time() - $^T;
-    return &num2alphanum( $$, $delta, $counter++ );
+    return &num2alphanum
+    (
+      $$,
+      int( &AE::time() - $^T ),
+      $counter++,
+    );
   }
 }
 

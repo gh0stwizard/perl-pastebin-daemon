@@ -1,0 +1,697 @@
+
+#------------------------------------------------------------------------------
+# $File: acorn,v 1.5 2009/09/19 16:28:07 christos Exp $
+# acorn:  file(1) magic for files found on Acorn systems
+#
+
+#------------------------------------------------------------------------------
+# $File: assembler,v 1.1 2011/12/08 12:12:46 rrt Exp $
+# make:  file(1) magic for assembler source
+#
+0	regex	\^\.asciiz\?	assembler source text
+!:mime	text/x-asm
+0	regex	\^\.byte		assembler source text
+!:mime	text/x-asm
+0	regex	\^\.even		assembler source text
+!:mime	text/x-asm
+0	regex	\^\.globl		assembler source text
+!:mime	text/x-asm
+0	regex	\^\.text		assembler source text
+!:mime	text/x-asm
+
+# C
+0	regex	\^#include	C source text
+!:mime	text/x-c
+!:strength / 2
+0	regex	\^char		C source text
+!:mime	text/x-c
+!:strength / 2
+0	regex	\^double		C source text
+!:mime	text/x-c
+!:strength / 2
+0	regex	\^extern		C source text
+!:mime	text/x-c
+!:strength / 2
+0	regex	\^float		C source text
+!:mime	text/x-c
+!:strength / 2
+0	regex	\^struct		C source text
+!:mime	text/x-c
+!:strength / 2
+0   regex   \^typedef struct C source text
+!:mime	text/x-c
+0	regex	\^union		C source text
+!:mime	text/x-c
+!:strength / 2
+0	search/8192	main(		C source text
+!:mime	text/x-c
+!:strength / 2
+
+# C++
+# The strength of these rules is increased so they beat the C rules above
+0	regex	\^template	C++ source text
+!:strength + 10
+!:mime	text/x-c++
+0	regex	\^virtual		C++ source text
+!:strength + 10
+!:mime	text/x-c++
+0	regex	\^class		C++ source text
+!:strength + 10
+!:mime	text/x-c++
+0	regex	\^public:		C++ source text
+!:strength + 10
+!:mime	text/x-c++
+0	regex	\^private:		C++ source text
+!:strength + 10
+!:mime	text/x-c++
+
+#------------------------------------------------------------------------------
+# $File: commands,v 1.42 2011/12/05 23:14:02 rrt Exp $
+# commands:  file(1) magic for various shells and interpreters
+#
+#0	string/w	:			shell archive or script for antique kernel text
+0	string/wt	#!\ /bin/sh		POSIX shell script text executable
+!:mime	text/x-shellscript
+0	string/wt	#!\ /bin/csh		C shell script text executable
+!:mime	text/x-shellscript
+# korn shell magic, sent by George Wu, gwu@clyde.att.com
+0	string/wt	#!\ /bin/ksh		Korn shell script text executable
+!:mime	text/x-shellscript
+0	string/wt 	#!\ /bin/tcsh		Tenex C shell script text executable
+!:mime	text/x-shellscript
+0	string/wt	#!\ /usr/bin/tcsh	Tenex C shell script text executable
+!:mime	text/x-shellscript
+0	string/wt 	#!\ /usr/local/tcsh	Tenex C shell script text executable
+!:mime	text/x-shellscript
+0	string/wt	#!\ /usr/local/bin/tcsh	Tenex C shell script text executable
+!:mime	text/x-shellscript
+
+#
+# zsh/ash/ae/nawk/gawk magic from cameron@cs.unsw.oz.au (Cameron Simpson)
+0	string/wt	#!\ /bin/zsh		Paul Falstad's zsh script text executable
+!:mime	text/x-shellscript
+0	string/wt	#!\ /usr/bin/zsh	Paul Falstad's zsh script text executable
+!:mime	text/x-shellscript
+0	string/wt	#!\ /usr/local/bin/zsh	Paul Falstad's zsh script text executable
+!:mime	text/x-shellscript
+0	string/wt	#!\ /usr/local/bin/ash	Neil Brown's ash script text executable
+!:mime	text/x-shellscript
+0	string/wt	#!\ /usr/local/bin/ae	Neil Brown's ae script text executable
+!:mime	text/x-shellscript
+0	string/wt	#!\ /bin/nawk		new awk script text executable
+!:mime	text/x-nawk
+0	string/wt	#!\ /usr/bin/nawk	new awk script text executable
+!:mime	text/x-nawk
+0	string/wt	#!\ /usr/local/bin/nawk	new awk script text executable
+!:mime	text/x-nawk
+0	string/wt	#!\ /bin/gawk		GNU awk script text executable
+!:mime	text/x-gawk
+0	string/wt	#!\ /usr/bin/gawk	GNU awk script text executable
+!:mime	text/x-gawk
+0	string/wt	#!\ /usr/local/bin/gawk	GNU awk script text executable
+!:mime	text/x-gawk
+#
+0	string/wt	#!\ /bin/awk		awk script text executable
+!:mime	text/x-awk
+0	string/wt	#!\ /usr/bin/awk	awk script text executable
+!:mime	text/x-awk
+0	regex		=^\\s*BEGIN\\s*[{]	awk script text
+
+
+# AT&T Bell Labs' Plan 9 shell
+0	string/wt	#!\ /bin/rc	Plan 9 rc shell script text executable
+
+# bash shell magic, from Peter Tobias (tobias@server.et-inf.fho-emden.de)
+0	string/wt	#!\ /bin/bash	Bourne-Again shell script text executable
+!:mime	text/x-shellscript
+0	string/wt	#!\ /usr/bin/bash	Bourne-Again shell script text executable
+!:mime	text/x-shellscript
+0	string/wt	#!\ /usr/local/bash	Bourne-Again shell script text executable
+!:mime	text/x-shellscript
+0	string/wt	#!\ /usr/local/bin/bash	Bourne-Again shell script text executable
+!:mime	text/x-shellscript
+
+# PHP scripts
+# Ulf Harnhammar <ulfh@update.uu.se>
+0	search/1/c	=<?php			PHP script text
+!:mime	text/x-php
+0	search/1	=<?\n			PHP script text
+!:mime	text/x-php
+0	search/1	=<?\r			PHP script text
+!:mime	text/x-php
+0	search/1/w	#!\ /usr/local/bin/php	PHP script text executable
+!:mime	text/x-php
+0	search/1/w	#!\ /usr/bin/php	PHP script text executable
+!:mime	text/x-php
+# Smarty compiled template, http://www.smarty.net/
+# Elan Ruusamäe <glen@delfi.ee>
+0	string	=<?php\ /*\ Smarty\ version	Smarty compiled template
+>24	regex	[0-9.]+				\b, version %s
+!:mime	text/x-php
+
+#------------------------------------------------------------------------------
+# $File: diff,v 1.12 2010/12/07 16:52:52 christos Exp $
+# diff:  file(1) magic for diff(1) output
+#
+0	search/1	diff\ 		diff output text
+!:mime	text/x-diff
+0	search/1	***\ 		diff output text
+!:mime	text/x-diff
+0	search/1	Only\ in\ 	diff output text
+!:mime	text/x-diff
+0	search/1	Common\ subdirectories:\ 	diff output text
+!:mime	text/x-diff
+
+0	search/1	Index:		RCS/CVS diff output text
+!:mime	text/x-diff
+
+# bsdiff:  file(1) magic for bsdiff(1) output
+0	string/t		BSDIFF40	bsdiff(1) patch file
+
+
+# unified diff
+0	search/4096	---\ 
+>&0	search/1024 \n
+>>&0	search/1 +++\ 
+>>>&0	search/1024 \n
+>>>>&0	search/1 @@	unified diff output text
+!:mime	text/x-diff
+!:strength + 90
+
+#------------------------------------------------------------------------------
+# $File: fortran,v 1.6 2009/09/19 16:28:09 christos Exp $
+# FORTRAN source
+0	regex/100	\^[Cc][\ \t]	FORTRAN program
+!:mime	text/x-fortran
+
+# GnuPG
+# The format is very similar to pgp
+0	string          \001gpg                 GPG key trust database
+>4	byte            x                       version %d
+# Note: magic.mime had 0x8501 for the next line instead of 0x8502
+0	beshort		0x8502			GPG encrypted data
+!:mime	text/PGP # encoding: data
+
+# gettext message catalogue
+0	regex	\^msgid\ 		GNU gettext message catalogue text
+!:mime text/x-po
+
+
+# Java source
+0	regex	^import.*;$	Java source
+!:mime	text/x-java
+
+
+#------------------------------------------------------------------------------
+# $File: lisp,v 1.23 2009/09/19 16:28:10 christos Exp $
+# lisp:  file(1) magic for lisp programs
+#
+# various lisp types, from Daniel Quinlan (quinlan@yggdrasil.com)
+
+# updated by Joerg Jenderek
+# GRR: This lot is too weak
+#0	string	;;			
+# windows INF files often begin with semicolon and use CRLF as line end
+# lisp files are mainly created on unix system with LF as line end
+#>2	search/4096	!\r		Lisp/Scheme program text
+#>2	search/4096	\r		Windows INF file
+
+0	search/4096	(setq\ 			Lisp/Scheme program text
+!:mime	text/x-lisp
+0	search/4096	(defvar\ 		Lisp/Scheme program text
+!:mime	text/x-lisp
+0	search/4096	(defparam\ 		Lisp/Scheme program text
+!:mime	text/x-lisp
+0	search/4096	(defun\  		Lisp/Scheme program text
+!:mime	text/x-lisp
+0	search/4096	(autoload\ 		Lisp/Scheme program text
+!:mime	text/x-lisp
+0	search/4096	(custom-set-variables\ 	Lisp/Scheme program text
+!:mime	text/x-lisp
+
+# Emacs 18 - this is always correct, but not very magical.
+0	string	\012(			Emacs v18 byte-compiled Lisp data
+!:mime	application/x-elc
+# Emacs 19+ - ver. recognition added by Ian Springer
+# Also applies to XEmacs 19+ .elc files; could tell them apart with regexs
+# - Chris Chittleborough <cchittleborough@yahoo.com.au>
+0	string	;ELC	
+>4	byte	>18			
+>4	byte    <32			Emacs/XEmacs v%d byte-compiled Lisp data
+!:mime	application/x-elc		
+
+# Files produced by CLISP Common Lisp From: Bruno Haible <haible@ilog.fr>
+0	string	(SYSTEM::VERSION\040'	CLISP byte-compiled Lisp program (pre 2004-03-27)
+0	string	(|SYSTEM|::|VERSION|\040'	CLISP byte-compiled Lisp program text
+
+0	long	0x70768BD2		CLISP memory image data
+0	long	0xD28B7670		CLISP memory image data, other endian
+
+#.com and .bin for MIT scheme 
+0	string	\372\372\372\372	MIT scheme (library?)
+
+# From: David Allouche <david@allouche.net>
+0	search/1	\<TeXmacs|	TeXmacs document text
+!:mime	text/texmacs
+
+
+#------------------------------------------------------------------------------
+# $File: lua,v 1.5 2009/09/19 16:28:10 christos Exp $
+# lua:  file(1) magic for Lua scripting language
+# URL:  http://www.lua.org/
+# From: Reuben Thomas <rrt@sc3d.org>, Seo Sanghyeon <tinuviel@sparcs.kaist.ac.kr>
+
+# Lua scripts
+0	search/1/w	#!\ /usr/bin/lua	Lua script text executable
+!:mime	text/x-lua
+0	search/1/w	#!\ /usr/local/bin/lua	Lua script text executable
+!:mime	text/x-lua
+0	search/1	#!/usr/bin/env\ lua	Lua script text executable
+!:mime	text/x-lua
+0	search/1	#!\ /usr/bin/env\ lua	Lua script text executable
+!:mime	text/x-lua
+
+#------------------------------------------------------------------------------
+# $File: m4,v 1.1 2011/12/08 12:12:46 rrt Exp $
+# make:  file(1) magic for M4 scripts
+#
+0	regex	\^dnl\ 		M4 macro processor script text
+!:mime	text/x-m4
+
+
+#------------------------------------------------------------------------------
+# $File: make,v 1.1 2011/12/08 12:12:46 rrt Exp $
+# make:  file(1) magic for makefiles
+#
+0	regex	\^CFLAGS	makefile script text
+!:mime	text/x-makefile
+0	regex	\^LDFLAGS	makefile script text
+!:mime	text/x-makefile
+0	regex	\^all:	makefile script text
+!:mime	text/x-makefile
+0	regex	\^.PRECIOUS	makefile script text
+!:mime	text/x-makefile
+
+0	regex	\^SUBDIRS	automake makefile script text
+!:mime	text/x-makefile
+
+
+#-----------------------------------------------------------------------------
+# $File: misctools,v 1.12 2010/09/29 18:36:49 rrt Exp $
+# misctools:  file(1) magic for miscellaneous UNIX tools.
+#
+0	search/1	%%!!			X-Post-It-Note text
+0	string/c	BEGIN:VCALENDAR		vCalendar calendar file
+!:mime	text/calendar
+0	string/c	BEGIN:VCARD		vCard visiting card
+!:mime	text/x-vcard
+
+
+#------------------------------------------------------------------------------
+# $File: msdos,v 1.77 2011/12/07 22:05:05 christos Exp $
+# msdos:  file(1) magic for MS-DOS files
+#
+
+# .BAT files (Daniel Quinlan, quinlan@yggdrasil.com)
+# updated by Joerg Jenderek at Oct 2008,Apr 2011
+0	string/t	@			
+>1	string/cW	\ echo\ off	DOS batch file text
+!:mime	text/x-msdos-batch
+>1	string/cW	echo\ off	DOS batch file text
+!:mime	text/x-msdos-batch
+>1	string/cW	rem		DOS batch file text
+!:mime	text/x-msdos-batch
+>1	string/cW	set\ 		DOS batch file text
+!:mime	text/x-msdos-batch
+
+#------------------------------------------------------------------------------
+# $File: pascal,v 1.1 2011/12/08 12:12:46 rrt Exp $
+# pascal:  file(1) magic for Pascal source
+#
+0	search/8192	(input,		Pascal source text
+!:mime	text/x-pascal
+0	regex		\^program	Pascal source text
+!:mime	text/x-pascal
+0	regex           	\^record		Pascal source text
+!:mime	text/x-pascal
+
+#------------------------------------------------------------------------------
+# $File: perl,v 1.17 2011/12/16 16:24:40 rrt Exp $
+# perl:  file(1) magic for Larry Wall's perl language.
+#
+# The `eval' lines recognizes an outrageously clever hack.
+# Keith Waclena <keith@cerberus.uchicago.edu>
+# Send additions to <perl5-porters@perl.org>
+0	search/1/w	#!\ /bin/perl			Perl script text executable
+!:mime	text/x-perl
+0	search/1	eval\ "exec\ /bin/perl		Perl script text
+!:mime	text/x-perl
+0	search/1/w	#!\ /usr/bin/perl		Perl script text executable
+!:mime	text/x-perl
+0	search/1	eval\ "exec\ /usr/bin/perl	Perl script text
+!:mime	text/x-perl
+0	search/1/w	#!\ /usr/local/bin/perl		Perl script text executable
+!:mime	text/x-perl
+0	search/1	eval\ "exec\ /usr/local/bin/perl	Perl script text
+!:mime	text/x-perl
+0	search/1	eval\ '(exit\ $?0)'\ &&\ eval\ 'exec	Perl script text
+!:mime	text/x-perl
+0	search/1	#!/usr/bin/env\ perl	Perl script text executable
+!:mime	text/x-perl
+0	search/1	#!\ /usr/bin/env\ perl	Perl script text executable
+!:mime	text/x-perl
+
+# ppb specials
+0   regex  \^use[\ \t]+strict[\ \t]?\;      Perl script text executable
+!:mime	text/x-perl
+!:strength + 10
+0   regex  \^use[\ \t]+warnings[\ \t]?\;    Perl script text executable
+!:mime	text/x-perl
+!:strength + 10
+0   regex  \^package[\ \t]+[A-Za-z0-9]+
+>&0 regex (\:\:[A-Za-z0-9]+)*\;             Perl script text executable
+!:mime	text/x-perl
+!:strength + 10
+
+# Perl POD documents
+# From: Tom Hukins <tom@eborcom.com>
+#
+# Note: mime added for vimbowd
+0	search/1/W	\__END__\n		Perl POD document text
+!:mime	text/x-pod
+0	search/1/W	\=pod\n		Perl POD document text
+!:mime	text/x-pod
+0	search/1/W	\n\=pod\n	Perl POD document text
+!:mime	text/x-pod
+0	search/1/W	\=head1\ 	Perl POD document text
+!:mime	text/x-pod
+0	search/1/W	\n\=head1\ 	Perl POD document text
+!:mime	text/x-pod
+0	search/1/W	\=head2\ 	Perl POD document text
+!:mime	text/x-pod
+0	search/1/W	\n\=head2\ 	Perl POD document text
+!:mime	text/x-pod
+
+# Perl Storable data files.
+0	string	perl-store	perl Storable (v0.6) data
+>4	byte	>0	(net-order %d)
+>>4	byte	&01	(network-ordered)
+>>4	byte	=3	(major 1)
+>>4	byte	=2	(major 1)
+
+0	string	pst0	perl Storable (v0.7) data
+>4	byte	>0
+>>4	byte	&01	(network-ordered)
+>>4	byte	=5	(major 2)
+>>4	byte	=4	(major 2)
+>>5	byte	>0	(minor %d)
+
+
+#------------------------------------------------------------------------------
+# $File: python,v 1.20 2011/12/13 13:53:14 christos Exp $
+# python:  file(1) magic for python
+#
+# Outlook puts """ too for urgent messages
+# From: David Necas <yeti@physics.muni.cz>
+# often the module starts with a multiline string
+0	string/t	"""	Python script text executable
+# MAGIC as specified in Python/import.c (1.5 to 2.7a0 and 3.1a0, assuming
+# that Py_UnicodeFlag is off for Python 2)
+# 20121  ( YEAR - 1995 ) + MONTH  + DAY (little endian followed by "\r\n"
+0	belong		0x994e0d0a	python 1.5/1.6 byte-compiled
+0	belong		0x87c60d0a	python 2.0 byte-compiled
+0	belong		0x2aeb0d0a	python 2.1 byte-compiled
+0	belong		0x2ded0d0a	python 2.2 byte-compiled
+0	belong		0x3bf20d0a	python 2.3 byte-compiled
+0	belong		0x6df20d0a	python 2.4 byte-compiled
+0	belong		0xb3f20d0a	python 2.5 byte-compiled
+0	belong		0xd1f20d0a	python 2.6 byte-compiled
+0	belong		0x03f30d0a	python 2.7 byte-compiled
+0	belong		0x3b0c0d0a	python 3.0 byte-compiled
+0	belong		0x4f0c0d0a	python 3.1 byte-compiled
+0	belong		0x6c0c0d0a	python 3.2 byte-compiled
+
+0	search/1/w	#!\ /usr/bin/python	Python script text executable
+!:mime text/x-python
+0	search/1/w	#!\ /usr/local/bin/python	Python script text executable
+!:mime text/x-python
+0	search/1	#!/usr/bin/env\ python	Python script text executable
+!:mime text/x-python
+0	search/1	#!\ /usr/bin/env\ python	Python script text executable
+!:mime text/x-python
+
+
+# from module.submodule import func1, func2
+0	regex	\^from\\s+(\\w|\\.)+\\s+import.*$	Python script text executable
+!:mime text/x-python
+
+# def __init__ (self, ...):
+0	search/4096	def\ __init__
+>&0	search/64 self	Python script text executable
+!:mime text/x-python
+
+# comments
+0	search/4096	'''
+>&0	regex	.*'''$	Python script text executable
+!:mime text/x-python
+
+0	search/4096	"""
+>&0	regex	.*"""$	Python script text executable
+!:mime text/x-python
+
+# try:
+# except: or finally:
+# block
+0	search/4096	try:
+>&0	regex	\^\\s*except.*:	Python script text executable
+!:mime text/x-python
+>&0	search/4096	finally:	Python script text executable
+!:mime text/x-python
+
+# def name(args, args):
+0	regex	 \^(\ |\\t)*def\ +[a-zA-Z]+
+>&0	regex	\ *\\(([a-zA-Z]|,|\ )*\\):$ Python script text executable
+!:mime text/x-python
+
+
+#------------------------------------------------------------------------------
+# $File: rtf,v 1.7 2009/09/19 16:28:12 christos Exp $
+# rtf:	file(1) magic for Rich Text Format (RTF)
+#
+# Duncan P. Simpson, D.P.Simpson@dcs.warwick.ac.uk
+#
+0	string		{\\rtf		Rich Text Format data,
+!:mime	text/rtf
+>5	string		1		version 1,
+>>6	string		\\ansi		ANSI
+>>6	string		\\mac		Apple Macintosh
+>>6	string		\\pc		IBM PC, code page 437
+>>6	string		\\pca		IBM PS/2, code page 850
+>>6	default		x		unknown character set
+>5	default		x		unknown version
+
+#------------------------------------------------------------------------------
+# $File: ruby,v 1.5 2010/07/21 16:47:17 christos Exp $
+# ruby:  file(1) magic for Ruby scripting language
+# URL:  http://www.ruby-lang.org/
+# From: Reuben Thomas <rrt@sc3d.org>
+
+# Ruby scripts
+0	search/1/w	#!\ /usr/bin/ruby	Ruby script text executable
+!:mime text/x-ruby
+0	search/1/w	#!\ /usr/local/bin/ruby	Ruby script text executable
+!:mime text/x-ruby
+0	search/1	#!/usr/bin/env\ ruby	Ruby script text executable
+!:mime text/x-ruby
+0	search/1	#!\ /usr/bin/env\ ruby	Ruby script text executable
+!:mime text/x-ruby
+
+# What looks like ruby, but does not have a shebang
+# (modules and such)
+# From: Lubomir Rintel <lkundrak@v3.sk>
+0	regex		\^[\ \t]*require[\ \t]'[A-Za-z_/]+'
+>0	regex		include\ [A-Z]|def\ [a-z]|\ do$
+>>0	regex		\^[\ \t]*end([\ \t]*[;#].*)?$		Ruby script text
+!:mime	text/x-ruby
+0	regex		\^[\ \t]*(class|module)[\ \t][A-Z]
+>0	regex		(modul|includ)e\ [A-Z]|def\ [a-z]
+>>0	regex		\^[\ \t]*end([\ \t]*[;#].*)?$		Ruby module source text
+!:mime	text/x-ruby
+
+
+
+# xhtml
+0	string/t		\<?xml\ version="
+>15	string		>\0
+>>19	search/4096/cWbt	\<!doctype\ html	XHTML document text
+!:mime	text/html
+0	string/t		\<?xml\ version='
+>15	string		>\0
+>>19	search/4096/cWbt	\<!doctype\ html	XHTML document text
+!:mime	text/html
+0	string/t		\<?xml\ version="
+>15	string		>\0
+>>19	search/4096/cWbt	\<html	broken XHTML document text
+!:mime	text/html
+
+#------------------------------------------------------------------------------
+# sgml:  file(1) magic for Standard Generalized Markup Language
+# HyperText Markup Language (HTML) is an SGML document type,
+# from Daniel Quinlan (quinlan@yggdrasil.com)
+# adapted to string extenstions by Anthon van der Neut <anthon@mnt.org)
+0	search/4096/cWt	\<!doctype\ html	HTML document text
+!:mime	text/html
+0	search/4096/cwt	\<head			HTML document text
+!:mime	text/html
+0	search/4096/cwt	\<title			HTML document text
+!:mime	text/html
+0	search/4096/cwt	\<html			HTML document text
+!:mime	text/html
+0	search/4096/cwt	\<script 		HTML document text
+!:mime	text/html
+0	search/4096/cwt	\<style 		HTML document text
+!:mime	text/html
+0	search/4096/cwt	\<table			HTML document text
+!:mime	text/html
+0	search/4096/cwt	\<a\ href=		HTML document text
+!:mime	text/html
+
+# Extensible markup language (XML), a subset of SGML
+# from Marc Prud'hommeaux (marc@apocalypse.org)
+0	search/1/cwt	\<?xml			XML document text
+!:mime	application/xml
+0	string/t		\<?xml\ version\ "	XML
+!:mime	application/xml
+0	string/t		\<?xml\ version="	XML
+!:mime	application/xml
+>15	search/1	>\0			%.3s document text
+>>23	search/1	\<xsl:stylesheet	(XSL stylesheet)
+>>24	search/1	\<xsl:stylesheet	(XSL stylesheet)
+0	string		\<?xml\ version='	XML
+!:mime	application/xml
+>15	search/1	>\0			%.3s document text
+>>23	search/1	\<xsl:stylesheet	(XSL stylesheet)
+>>24	search/1	\<xsl:stylesheet	(XSL stylesheet)
+0	search/1/wbt	\<?xml			XML document text
+!:mime	application/xml
+!:strength - 10
+0	search/1/wt	\<?XML			broken XML document text
+!:mime	application/xml
+!:strength - 10
+
+
+# SGML, mostly from rph@sq
+0	search/4096/cwt	\<!doctype		exported SGML document text
+0	search/4096/cwt	\<!subdoc		exported SGML subdocument text
+0	search/4096/cwt	\<!--			exported SGML document text
+!:strength - 10
+
+# Web browser cookie files
+# (Mozilla, Galeon, Netscape 4, Konqueror..)
+# Ulf Harnhammar <ulfh@update.uu.se>
+0	search/1	#\ HTTP\ Cookie\ File	Web browser cookie text
+0	search/1	#\ Netscape\ HTTP\ Cookie\ File	Netscape cookie text
+0	search/1	#\ KDE\ Cookie\ File	Konqueror cookie text
+
+
+#------------------------------------------------------------------------------
+# file:  file(1) magic for Tcl scripting language
+# URL:  http://www.tcl.tk/
+# From: gustaf neumann
+
+# Tcl scripts
+0	search/1/w	#!\ /usr/bin/tcl	Tcl script text executable
+!:mime	text/x-lua
+0	search/1/w	#!\ /usr/local/bin/tcl	Tcl script text executable
+!:mime	text/x-tcl
+0	search/1	#!/usr/bin/env\ tcl	Tcl script text executable
+!:mime	text/x-tcl
+0	search/1	#!\ /usr/bin/env\ tcl	Tcl script text executable
+!:mime	text/x-tcl
+0	search/1/w	#!\ /usr/bin/wish	Tcl/Tk script text executable
+!:mime	text/x-tcl
+0	search/1/w	#!\ /usr/local/bin/wish	Tcl/Tk script text executable
+!:mime	text/x-tcl
+0	search/1	#!/usr/bin/env\ wish	Tcl/Tk script text executable
+!:mime	text/x-tcl
+0	search/1	#!\ /usr/bin/env\ wish	Tcl/Tk script text executable
+!:mime	text/x-tcl
+
+# check the first line
+0	search/1	package\ req
+>0	regex		\^package[\ \t]+req	Tcl script
+# not 'p', check other lines
+0	search/1	!p
+>0	regex		\^package[\ \t]+req	Tcl script
+
+
+# Texinfo and GNU Info, from Daniel Quinlan (quinlan@yggdrasil.com)
+0	search/1	\\input\ texinfo	Texinfo source text
+!:mime	text/x-texinfo
+0	search/1	This\ is\ Info\ file	GNU Info text
+!:mime	text/x-info
+
+# TeX documents, from Daniel Quinlan (quinlan@yggdrasil.com)
+0	search/4096	\\input		TeX document text
+!:mime	text/x-tex
+!:strength + 15
+0	search/4096	\\section	LaTeX document text
+!:mime	text/x-tex
+!:strength + 18
+0	search/4096	\\setlength	LaTeX document text
+!:mime	text/x-tex
+!:strength + 15
+0	search/4096	\\documentstyle	LaTeX document text
+!:mime	text/x-tex
+!:strength + 18
+0	search/4096	\\chapter	LaTeX document text
+!:mime	text/x-tex
+!:strength + 18
+0	search/4096	\\documentclass	LaTeX 2e document text
+!:mime	text/x-tex
+!:strength + 15
+0	search/4096	\\relax		LaTeX auxiliary file
+!:mime	text/x-tex
+!:strength + 15
+0	search/4096	\\contentsline	LaTeX table of contents
+!:mime	text/x-tex
+!:strength + 15
+0	search/4096	%\ -*-latex-*-	LaTeX document text
+!:mime	text/x-tex
+
+# Tex document, from Hendrik Scholz <hendrik@scholz.net>
+0   	search/1	\\ifx		TeX document text
+
+# Index and glossary files
+0	search/4096	\\indexentry	LaTeX raw index file
+0	search/4096	\\begin{theindex}	LaTeX sorted index
+0	search/4096	\\glossaryentry	LaTeX raw glossary
+0	search/4096	\\begin{theglossary}	LaTeX sorted glossary
+0	search/4096	This\ is\ makeindex	Makeindex log file
+
+# End of TeX
+
+
+#------------------------------------------------------------------------------
+# $File: troff,v 1.10 2009/09/19 16:28:12 christos Exp $
+# troff:  file(1) magic for *roff
+#
+# updated by Daniel Quinlan (quinlan@yggdrasil.com)
+
+# troff input
+0	search/1	.\\"		troff or preprocessor input text
+!:mime	text/troff
+0	search/1	'\\"		troff or preprocessor input text
+!:mime	text/troff
+0	search/1	'.\\"		troff or preprocessor input text
+!:mime	text/troff
+0	search/1	\\"		troff or preprocessor input text
+!:mime	text/troff
+0	search/1	'''		troff or preprocessor input text
+!:mime	text/troff
+0	regex/20	\^\\.[A-Za-z0-9][A-Za-z0-9][\ \t]	troff or preprocessor input text
+!:mime	text/troff
+0	regex/20	\^\\.[A-Za-z0-9][A-Za-z0-9]$	troff or preprocessor input text
+!:mime	text/troff
+
+

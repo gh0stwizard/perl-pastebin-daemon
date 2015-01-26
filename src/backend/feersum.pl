@@ -280,8 +280,15 @@ sub load_app() {
 
 sub debug_settings() {
   AE::log debug => "INC[0] = %s", $INC[0];
-  AE::log debug => "%s = %s", $_, $ENV{ $_ } || "" 
-    for ( 'PERL_ANYEVENT_LOG', join( '_', uc( $PROGRAM_NAME ), 'WWW_DIR' ) );
+  
+  my @envopts = 
+  (
+    'PERL_ANYEVENT_LOG',
+    join( '_', uc( $PROGRAM_NAME ), 'WWW_DIR' ),
+    join( '_', uc( $PROGRAM_NAME ), 'BASEDIR' ),
+  );
+  AE::log debug => "%s = %s", $_, $ENV{ $_ } || "" for ( @envopts );
+  
   AE::log debug => "%s = %s",
     $_,
     $CURRENT_SETTINGS{ $_ } for ( sort keys %CURRENT_SETTINGS );  

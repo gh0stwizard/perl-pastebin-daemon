@@ -2,19 +2,16 @@ package PPB::Feersum::Tiny;
 
 use strict;
 use AnyEvent;
-use Cwd qw( abs_path );
+use Cwd ();
 use File::Spec::Functions qw( catfile );
-use File::LibMagic ();
+use MIME::Type::FileName;
 
 
-our $VERSION = '0.001'; $VERSION = eval $VERSION;
+our $VERSION = '0.002'; $VERSION = eval $VERSION;
 
 
 my @HEADER_PLAIN = ( 'Content-Type', 'text/plain' );
-my @HEADER_HTML = ( 'Content-Type', 'text/html' );
 my $READ_BUF_SIZE = 8192;
-my $MAGIC_FILE = catfile( $ENV{ 'PPB_BASEDIR' }, "perl.magic" );
-
 
 #
 # Parameters:
@@ -22,24 +19,42 @@ my $MAGIC_FILE = catfile( $ENV{ 'PPB_BASEDIR' }, "perl.magic" );
 #
 # Returns: nothing
 #
-sub send_file() {
+sub send_file($$) {
   my ( $www_dir, $req ) = @_;
   
   my $env = $req->env();
   my $path_info = $env->{ 'PATH_INFO' };
   my $query_string = $env->{ 'QUERY_STRING' } || "";
-  my $file = '';
-  
-  if ( $path_info eq '/' && $query_string eq '' ) {
-    # send index.html
-    $file = abs_path catfile( $www_dir, 'index.html' );
+
+  if ( $query_string eq '' ) {
+    my $file = '';
+    
+    if ( $path_info eq '/' ) {
+      # send index.html
+      $file = &Cwd::abs_path( catfile( $www_dir, 'index.html' ) );
+    } else {
+      $file = &Cwd::abs_path( catfile( $www_dir, $path_info ) );
+    }
+
+    # abs_path returns nothing if real path becomes incorrect,
+    # i.e. abs_path "/home/../../etc/passwd" == ""
+    # But, abs_path "/home/../etc/passwd" == "/etc/passwd"
+
+    if ( $file eq '' ) {
+      $req->send_response( 404, \@HEADER_PLAIN, [ 'Not Found' ] );
+      return;
+    }
+
+    if ( $file =~ /^\Q$www_dir\E/ ) {
+      # process files in the directory $www_dir only
+      &_send( $req, $file  );
+    } else {
+      $req->send_response( 400, \@HEADER_PLAIN, [ 'Bad Request' ] );
+    }
   } else {
-    $file = abs_path catfile( $www_dir, $path_info );
+    AE::log trace => "query %s", $query_string;
+    $req->send_response( 501, \@HEADER_PLAIN, [ 'Not Implemented' ] );
   }
-  
-  #AE::log trace => "sending %s", $file;
-  
-  &_send( $req, $file );
 }
 
 sub _send($$) {
@@ -63,35 +78,12 @@ sub _send($$) {
     return;
   };
   
-  my $type = File::LibMagic
-      ->new( $MAGIC_FILE )
-      ->info_from_filename( $file )
-      ->{ 'mime_type' };
-  
-  AE::log trace => "mime for %s: %s", $file, $type;
-  
+  my $type = &MIME::Type::FileName::guess( $file );
   my $w = $req->start_streaming( 200, [ 'Content-Type' => $type ] );
   my $size = -s $fh;
   my $done = 0;
   my $chunk = $size >= $READ_BUF_SIZE ? $READ_BUF_SIZE : $size;
   
-#  $w->poll_cb( sub {
-#    my $read = read( $fh, my $buf, $chunk );
-#
-#    if ( defined $read ) {
-#      if ( $read == 0 ) {
-#        close $fh;
-#        $w->close();
-#      } else {
-#        $w->write( $buf );
-#      }
-#    } else {
-#      AE::log error => "read %s: %s", $file, $!;
-#      close $fh;
-#      $w->close();
-#    }
-#  } );
-
   while ( $done < $size ) {
     my $read = read( $fh, my $buf, $chunk );
 

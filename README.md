@@ -1,6 +1,6 @@
-# perl-pastebin-daemon
+# ppb
 
-Standalone HTTP pastebin service writen in Perl
+Standalone HTTP pastebin daemon written in [Perl](http://www.perl.org).
 
 # Why?
 
@@ -79,7 +79,7 @@ Allowed options:
 
 # Usage with nginx
 
-The server is able to run together with [nginx](http://nginx.org).
+The server is able to work together with [nginx](http://nginx.org).
 The sample configuration file for nginx is placed in <code>conf/nginx/ppb.conf</code>.
 
 Using ppb together with nginx is a good idea, because nginx is intended 
@@ -88,8 +88,8 @@ to cache static files.
 # Development & Customization
 
 The starter script <code>main.pl</code> was made to be independent
-on backend code, as possible at least.
-To create your own backend you have to create file in backend directory.
+on a backend code, as possible at least.
+To create your own backend you have to create a file in backend's directory.
 For instance, for Twiggy, you may create file <code>src/backend/twiggy.pl</code>.
 Then run the server in this way:
 
@@ -97,5 +97,5 @@ Then run the server in this way:
 shell> perl src/main.pl --backend=twiggy
 ```
 
-Note that extention of the file was ommited, as well as full path to
+Note that the extention of the file was ommitted, as well as full path to
 file.

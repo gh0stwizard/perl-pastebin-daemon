@@ -1,9 +1,9 @@
 use strict;
+use common::sense;
 use AnyEvent;
 use HTTP::Body ();
 use JSON::XS ();
 use Math::BigInt ();
-use Encode ();
 use PPB::DB::UnQLite;
 
 # body checks
@@ -11,8 +11,7 @@ my $MIN_BODY_SIZE = 4;
 my $MAX_BODY_SIZE = 524288;
 
 # http headers for responses
-my @HEADER_JSON = ( 'Content-Type' => 'application/json' );
-my @HEADER_HTML = ( 'Content-Type' => 'text/html; charset=UTF-8' );
+my @HEADER_JSON = ( 'Content-Type' => 'application/json; charset=UTF-8' );
 my @HEADER_PLAIN = ( 'Content-Type' => 'text/plain' );
 
 # www dir with index.html (standalone mode)
@@ -30,23 +29,27 @@ sub app {
     my $len = $env->{ 'CONTENT_LENGTH' };
     my $r = delete $env->{ 'psgi.input' };
     
-    $req->send_response
-    (
-      200,
-      \@HEADER_JSON,
-      &create_post( $r, $len, $type ),
-    );
+    my $w =$req->start_streaming( 200, \@HEADER_JSON );
+    $w->write( &create_post( $r, $len, $type ) );
+    $w->close();
   } elsif ( $method eq 'GET' ) {
-    # when working standalone, i.e. without nginx
-    require PPB::Feersum::Tiny;
-    &PPB::Feersum::Tiny::send_file( $WWW_DIR, $req );
+    if ( my $query = $env->{ 'QUERY_STRING' } ) {
+      AE::log trace => "query: %s", $query;
+
+      if ( $query =~ /^json=(\w{1,16})$/ ) {
+        my $w = $req->start_streaming( 200, \@HEADER_JSON );
+        $w->write( &load_post( $1 ) );
+        $w->close();
+      } else {
+        $req->send_response( &_501() );
+      }
+    } else {
+      # when working standalone, i.e. without nginx
+      require PPB::Feersum::Tiny;
+      &PPB::Feersum::Tiny::send_file( $WWW_DIR, $req );
+    }
   } else {
-    $req->send_response
-    (
-      405,
-      \@HEADER_PLAIN,
-      [ "Method Not Allowed" ],
-    );
+    $req->send_response( &_405() );
   }
   
   return;
@@ -211,6 +214,28 @@ sub read_body($$$) {
   $r->close();
   
   return $body;
+}
+
+sub load_post($) {
+  my ( $post_id ) = @_;
+  
+  my %response;
+  
+  if ( my $data = &PPB::DB::UnQLite::fetch( $post_id ) ) {
+    %response = ( "id" => $post_id, "data" => $data );
+  } else {
+    %response = ( "err" => "not found" );
+  }
+  
+  return &JSON::XS::encode_json( \%response );
+}
+
+sub _405 {
+  return ( 405, \@HEADER_PLAIN, [ "Method Not Allowed" ] );
+}
+
+sub _501 {
+  return ( 501, \@HEADER_PLAIN, [ 'Not Implemented' ] );
 }
 
 \&app;

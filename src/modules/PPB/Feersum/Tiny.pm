@@ -7,7 +7,7 @@ use File::Spec::Functions qw( catfile );
 use MIME::Type::FileName;
 
 
-our $VERSION = '0.002'; $VERSION = eval $VERSION;
+our $VERSION = '0.003'; $VERSION = eval $VERSION;
 
 
 my @HEADER_PLAIN = ( 'Content-Type', 'text/plain' );
@@ -28,22 +28,20 @@ sub send_file($$) {
 
   if ( $query_string eq '' ) {
     my $file = '';
+    my $index_file = &Cwd::abs_path( catfile( $www_dir, 'index.html' ) );
     
     if ( $path_info eq '/' ) {
       # send index.html
-      $file = &Cwd::abs_path( catfile( $www_dir, 'index.html' ) );
+      $file = $index_file;
     } else {
       $file = &Cwd::abs_path( catfile( $www_dir, $path_info ) );
+      # send index.html when file not found
+      $file = $index_file unless ( &is_file_exists( $file ) );
     }
 
     # abs_path returns nothing if real path becomes incorrect,
     # i.e. abs_path "/home/../../etc/passwd" == ""
     # But, abs_path "/home/../etc/passwd" == "/etc/passwd"
-
-    if ( $file eq '' ) {
-      $req->send_response( 404, \@HEADER_PLAIN, [ 'Not Found' ] );
-      return;
-    }
 
     if ( $file =~ /^\Q$www_dir\E/ ) {
       # process files in the directory $www_dir only
@@ -79,6 +77,7 @@ sub _send($$) {
   };
   
   my $type = &MIME::Type::FileName::guess( $file );
+  $type .= '; charset=UTF-8' if ( $type eq 'text/html' );
   my $w = $req->start_streaming( 200, [ 'Content-Type' => $type ] );
   my $size = -s $fh;
   my $done = 0;
@@ -101,6 +100,15 @@ sub _send($$) {
   $w->close();
   close( $fh )
     or AE::log error => "close %s: %s", $file, $!;
+}
+
+sub is_file_exists($) {
+  my ( $file ) = @_;
+
+  $file eq '' and return;
+  -d $file and return;
+  -e $file and return 1;
+  return;
 }
 
 scalar "I Need (Policy Story 2)";

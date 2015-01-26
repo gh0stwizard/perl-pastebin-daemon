@@ -8,7 +8,7 @@ html, body {
     background-color: #f1f1f1;
 }
 
-textarea {
+#area textarea {
     width: 99%;
     overflow: auto;
     background-color: white;
@@ -20,7 +20,9 @@ textarea {
     margin: 0 5px 5px 0;
     z-index: 1;
 }
-#error p, #link a {
+
+#error p,
+#link a {
     display: none;
     float: left;
     font-size: 2em;
@@ -54,55 +56,6 @@ textarea {
 }
 #logo a { 
     color: #f6f6f6;
-}
-
-/*
-    Text colorizer
-*/
-
-#area pre {
-    color: #fff;
-    background-color: #000;
-    padding: 10px;
-    text-align: left;
-    overflow: auto;
-}
-#area span.synComment {
-    color: blue;
-}
-#area span.synConstant {
-    color: red;
-}
-#area span.synIdentifier {
-    color: aqua;
-}
-#area span.synStatement {
-    color: yellow;
-}
-#area span.synPreProc {
-    color: fuchsia;
-}
-#area span.synType {
-    color: lime;
-}
-#area span.synSpecial {
-    color: fuchsia;
-}
-#area span.synUnderlined {
-    color: fuchsia;
-    text-decoration: underline;
-}
-#area span.synError { 
-    background-color: red;
-    color: white;
-    font-weight: bold;
-}
-#area span.synTodo {
-    background-color: yellow;
-    color: black;
-}
-#area span.Linenum {
-    color: yellow;
 }
 
 /*

@@ -1,7 +1,16 @@
 # perl-pastebin-daemon
+
 Standalone HTTP pastebin service writen in Perl
 
+# Why?
+
+Just for fun. The possible usecases:
+
+* Personal usage
+* Internal usage inside a company
+
 # Dependencies
+
 This software requires next modules and libraries installed
 via CPAN or other Perl package management system:
 
@@ -22,9 +31,9 @@ via CPAN or other Perl package management system:
 
 The program is splitted in three major parts:
 
-* runner (main.pl)
-* backend (backend/feersum.pl)
-* application (app/feersum.pl)
+* starter: <code>main.pl</code>
+* backend: <code>backend/feersum.pl</code>
+* application: <code>app/feersum.pl</code>
 
 To start the program type in console:
 
@@ -32,7 +41,17 @@ To start the program type in console:
 shell> perl src/main.pl
 ```
 
+By default the server is listening on the address <code>127.0.0.1:28950</code>.
+To run the listener on all interfaces and addresses you have to run 
+the server as described below:
+
+```
+shell> perl src/main.pl --listen 0.0.0.0:28950
+```
+
 # Options
+
+Use the option **--help** to see all available options:
 
 ```
 shell> perl src/main.pl --help
@@ -58,12 +77,20 @@ Allowed options:
   --pidfile [-P] arg       path to pid file (default: none)
 ```
 
+# Usage with nginx
+
+The server is able to run together with [nginx](http://nginx.org).
+The sample configuration file for nginx is placed in <code>conf/nginx/ppb.conf</code>.
+
+Using ppb together with nginx is a good idea, because nginx is intended 
+to cache static files.
+
 # Development & Customization
 
-The runner script <code>main.pl</code> was made to be independent 
-on backend code. To create your own backend you have to 
-create file in backend directory. For instance, for Twiggy, 
-you may create file <code>src/backend/twiggy.pl</code>. 
+The starter script <code>main.pl</code> was made to be independent
+on backend code, as possible at least.
+To create your own backend you have to create file in backend directory.
+For instance, for Twiggy, you may create file <code>src/backend/twiggy.pl</code>.
 Then run the server in this way:
 
 ```

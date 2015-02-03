@@ -1,2 +1,6 @@
 ppb.db
 ppb.db_unqlite_journal
+misc/ppbd
+misc/ppb.db
+misc/ppb.db_unqlite_journal
+

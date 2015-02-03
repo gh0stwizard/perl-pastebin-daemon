@@ -165,16 +165,30 @@ sub fix_paths() {
     'app'	=> 'app',
   );
   
-  for my $option ( keys %relpaths ) {
-    my $relpath = $relpaths{ $option };
-    my $filename = join '.', $options{ $option }, $file_ext;
+  if ( $0 eq '-e' ) {
+    # staticperl uses relative paths (vfs)
+    for my $option ( keys %relpaths ) {
+      my $relpath = $relpaths{ $option };
+      my $filename = join '.', $options{ $option }, $file_ext;
 
-    $options{ $option } = &File::Spec::Functions::catfile
-    (
-      &get_program_basedir(),
-      $relpath,
-      $filename,
-    );
+      $options{ $option } = &File::Spec::Functions::catfile
+      (
+        $relpath,
+        $filename,
+      );
+    }
+  } else {  
+    for my $option ( keys %relpaths ) {
+      my $relpath = $relpaths{ $option };
+      my $filename = join '.', $options{ $option }, $file_ext;
+
+      $options{ $option } = &File::Spec::Functions::catfile
+      (
+        &get_program_basedir(),
+        $relpath,
+        $filename,
+      );
+    }
   }
 }
 

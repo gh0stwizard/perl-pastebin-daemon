@@ -6,9 +6,10 @@ package PPB::DB::UnQLite;
 
 use strict;
 use UnQLite;
+use Encode ();
 use File::Spec::Functions ();
 
-our $VERSION = '0.001'; $VERSION = eval $VERSION;
+our $VERSION = '0.002'; $VERSION = eval $VERSION;
 
 
 my $BASEDIR = ( exists $ENV{ 'PPB_BASEDIR' } )
@@ -63,15 +64,14 @@ my $INSTANCE;
 sub store($$) {
   #my ( $post_id, $data ) = @_;
   
-  # returns 1 if success
-  # returns undef if failed
+  # returns 1 if success or undef if failed
   return $INSTANCE->kv_store( $_[0], $_[1] );
 }
 
 sub fetch($) {
   #my ( $post_id ) = @_;
   
-  return $INSTANCE->kv_fetch( $_[0] );
+  return &Encode::decode_utf8( $INSTANCE->kv_fetch( $_[0] ) );
 }
 
 sub delete_all() {

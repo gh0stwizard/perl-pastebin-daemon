@@ -1,29 +1,22 @@
 #!/bin/sh
 
 APPNAME="ppbd"
-SCRIPT="ppb.pl"
+STRIP="ppi"
+LINKTYPE="static" # "allow-dynamic"
 
 . ~/.staticperlrc
 
-~/staticperl mkapp $APPNAME --boot ../main.pl \
--MCwd \
--MEnv \
+~/staticperl mkapp $APPNAME --boot ../src/main.pl \
 -Msort.pm \
 -Mvars \
 -Mutf8 \
 -Mutf8_heavy.pl \
--MConfig \
--MConfig_heavy.pl \
 -MErrno \
 -MFcntl \
 -MPOSIX \
 -MSocket \
 -MCarp \
 -MEncode \
--MEncode::Unicode \
--MScalar::Util \
--MTime::HiRes \
--MStorable \
 -Mcommon::sense \
 -MEV \
 -MGuard \
@@ -36,22 +29,19 @@ SCRIPT="ppb.pl"
 -MAnyEvent::Log \
 -MPod::Usage \
 -MGetopt::Long \
--MClone \
+-MFile::Spec::Functions \
 -MJSON::XS \
--MJSON \
 -MSys::Syslog \
--MObject::Accessor \
 -MFeersum \
--MMongoDB \
--MDateTime \
--MDateTime::Tiny \
--Mboolean \
--MClass::Load::XS \
 -MIO::File \
 -MHTTP::Body \
--MDigest::JHash \
---strip ppi \
---allow-dynamic \
+-MMIME::Type::FileName \
+-MUnQLite \
+-MMath::BigInt \
+--strip ${STRIP} \
+--${LINKTYPE} \
 --usepacklists \
---incglob '/unicore/**.pl' \
---add "../$SCRIPT $SCRIPT"
+--add "../src/app/feersum.pl app/feersum.pl" \
+--add "../src/backend/feersum.pl backend/feersum.pl" \
+--add "../src/modules/PPB/DB/UnQLite.pm PPB/DB/UnQLite.pm" \
+--add "../src/modules/PPB/Feersum/Tiny.pm PPB/Feersum/Tiny.pm" \

@@ -10,6 +10,7 @@ use EV;
 use AnyEvent;
 use AnyEvent::Socket;
 use AnyEvent::Handle;
+use AnyEvent::Util ();
 use Socket ();
 use vars qw( $PROGRAM_NAME $VERSION );
 
@@ -19,6 +20,7 @@ my %DEFAULT_SETTINGS =
   'LISTEN'    => '127.0.0.1:28950',
   'APP_NAME'  => 'app+feersum.pl',
   'SOMAXCONN' => &Socket::SOMAXCONN(),
+  'PIDFILE'   => '',
 );
 
 
@@ -63,7 +65,8 @@ my %DEFAULT_SETTINGS =
 sub start_server() {
   &enable_syslog();
   &debug_settings();
-  &update_settings();  
+  &update_settings();
+  &write_pidfile();
   &start_httpd();
   
   AE::log note => "Listen on %s:%d, PID = %d",
@@ -73,6 +76,7 @@ sub start_server() {
 }
 
 sub shutdown_server() {
+  &unlink_pidfile();
   &stop_httpd();
   &EV::unloop();
 }
@@ -147,15 +151,24 @@ sub get_syslog_facility() {
   
   sub stop_httpd() {
     if ( ref $Instance eq 'Feersum' ) {
-      $Instance->request_handler( \&app_service_unavailable );
+      $Instance->request_handler( \&_503 );
       $Instance->unlisten();
       close( delete $Instance->{ 'socket' } )
-        or AE::log error => "Failed to close listen socket: %s", $!;
+        or AE::log error => "Close listen socket: %s", $!;
     }
   }
 }
 
-sub app_internal_error {
+sub _405 {
+  $_[0]->send_response
+  (
+    405,
+    [ 'Content-Type' => 'text/html' ],
+    [ "Method Not Allowed" ],
+  );
+}
+
+sub _500 {
   $_[0]->send_response
   (
     500,
@@ -164,7 +177,16 @@ sub app_internal_error {
   );
 }
 
-sub app_service_unavailable {
+sub _501 {
+  $_[0]->send_response
+  (
+    501,
+    [ 'Content-Type' => 'text/html' ],
+    [ 'Not Implemented' ],
+  );
+}
+
+sub _503 {
   $_[0]->send_response
   (
     503,
@@ -216,7 +238,6 @@ sub create_socket($$) {
     $!,
   ;
   
-  require AnyEvent::Util;
   &AnyEvent::Util::fh_nonblocking( $socket, 1 );
 
   my $sa = &AnyEvent::Socket::pack_sockaddr
@@ -275,7 +296,7 @@ sub load_app() {
     AE::log error => "Couldn't run %s", $file;
   }
   
-  return \&app_internal_error;
+  return \&_500;
 }
 
 sub debug_settings() {
@@ -286,12 +307,29 @@ sub debug_settings() {
     'PERL_ANYEVENT_LOG',
     join( '_', uc( $PROGRAM_NAME ), 'WWW_DIR' ),
     join( '_', uc( $PROGRAM_NAME ), 'BASEDIR' ),
+    join( '_', uc( $PROGRAM_NAME ), 'PIDFILE' ),
   );
   AE::log debug => "%s = %s", $_, $ENV{ $_ } || "" for ( @envopts );
   
-  AE::log debug => "%s = %s",
-    $_,
-    $CURRENT_SETTINGS{ $_ } for ( sort keys %CURRENT_SETTINGS );  
+  AE::log debug => "%s = %s", $_, $CURRENT_SETTINGS{ $_ }
+    for ( sort keys %CURRENT_SETTINGS );  
+}
+
+sub write_pidfile() {
+  my $file = $CURRENT_SETTINGS{ 'PIDFILE' } || return;
+
+  open( my $fh, ">", $file )
+    or AE::log fatal => "open pidfile %s: %s", $file, $!;
+  syswrite( $fh, $$ )
+    or AE::log fatal => "write pidfile %s: %s", $file, $!;
+  close( $fh )
+    or AE::log fatal => "close pidfile %s: %s", $file, $!;
+}
+
+sub unlink_pidfile() {
+  my $file = $CURRENT_SETTINGS{ 'PIDFILE' } || return;
+  unlink( $file )
+    or AE::log error => "unlink pidfile %s: %s", $file, $!;
 }
 
 scalar "Gameboy Megamix!";

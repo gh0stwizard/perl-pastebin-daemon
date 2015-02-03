@@ -73,25 +73,6 @@ sub os_fixes() {
   return;
 }
 
-sub get_program_basedir() {
-  my $execp = $0;
-
-  if ( $0 eq '-e' ) {
-    # staticperl fix
-    if ( $^O eq 'linux' ) {
-      $execp = &Cwd::abs_path( "/proc/self/exe" );
-    } else {
-      die "not implemented yet";
-    }
-  }
-  
-  my ( $vol, $dirs ) = &File::Spec::Functions::splitpath( $execp );
-  return &Cwd::abs_path
-  (
-    &File::Spec::Functions::catpath( $vol, $dirs )
-  );
-}
-
 #
 # main subroutine
 #
@@ -101,9 +82,8 @@ sub run_program() {
   &set_abs_paths();
   &set_env();
   &set_logger();
-
-  exists $options{ 'background' } && &daemonize();
-  
+  &check_pidfile();
+  &daemonize();
   &xrun();
 }
 
@@ -111,6 +91,8 @@ sub run_program() {
 # fork the process
 #
 sub daemonize() {
+  exists $options{ 'background' } or return;
+
   my $rootdir = ( exists $options{'home'} )
     ? $options{ 'home' }
     : &File::Spec::Functions::rootdir();
@@ -154,6 +136,16 @@ sub xrun() {
 }
 
 #
+# if pidfile exists throw error and exit
+#
+sub check_pidfile() {
+  $options{ 'pidfile' } || return;
+  -f $options{ 'pidfile' } || return;
+  printf "pidfile %s: file exists\n", $options{ 'pidfile' };
+  exit 1;
+}
+
+#
 # sets relative paths for files and adds extention to file names
 #
 sub fix_paths() {
@@ -190,6 +182,28 @@ sub fix_paths() {
       );
     }
   }
+}
+
+#
+# returns basedir of the program
+#
+sub get_program_basedir() {
+  my $execp = $0;
+
+  if ( $0 eq '-e' ) {
+    # staticperl fix
+    if ( $^O eq 'linux' ) {
+      $execp = &Cwd::abs_path( "/proc/self/exe" );
+    } else {
+      die "not implemented yet";
+    }
+  }
+  
+  my ( $vol, $dirs ) = &File::Spec::Functions::splitpath( $execp );
+  return &Cwd::abs_path
+  (
+    &File::Spec::Functions::catpath( $vol, $dirs )
+  );
 }
 
 #

@@ -124,15 +124,24 @@ $( function() {
     
     $( "textarea" ).hide();
 
-    $.getJSON( url, function( json ) {
+    $.ajax({
+      url: url,
+      type: "GET",
+      async: false,
+      dataType: "json",
+    })
+    .done( function ( json, textStatus, jqXHR ) {
       if ( json.id ) {
-        $( "textarea" ).append( $.parseHTML( json.data ) )
+      	$( "textarea" ).append( $.parseHTML( json.data ) )
         $( "textarea" )
         .keydown( MessageTextOnKeyEnter )
         .show( 'slide', { }, 750, pb_done() );
       } else {
         show_error( json.err );
       }
+    } )
+    .fail( function ( xhr, textStatus, errorThrown ) {
+      show_error( xhr.statusText + " (" + xhr.status + ")" );
     } );
   };
 
@@ -160,7 +169,6 @@ $( function() {
       }
     } )
     .fail( function ( xhr, textStatus, errorThrown ) {
-      console.log( xhr );
       show_error( "connection error" );
     } );
   };

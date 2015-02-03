@@ -41,7 +41,7 @@ sub app {
         $w->write( &load_post( $1 ) );
         $w->close();
       } else {
-        $req->send_response( &_501() );
+        &_501( $req );
       }
     } else {
       # when working standalone, i.e. without nginx
@@ -49,7 +49,7 @@ sub app {
       &PPB::Feersum::Tiny::send_file( $WWW_DIR, $req );
     }
   } else {
-    $req->send_response( &_405() );
+    &_405( $req );
   }
   
   return;
@@ -228,14 +228,6 @@ sub load_post($) {
   }
   
   return &JSON::XS::encode_json( \%response );
-}
-
-sub _405 {
-  return ( 405, \@HEADER_PLAIN, [ "Method Not Allowed" ] );
-}
-
-sub _501 {
-  return ( 501, \@HEADER_PLAIN, [ 'Not Implemented' ] );
 }
 
 \&app;
